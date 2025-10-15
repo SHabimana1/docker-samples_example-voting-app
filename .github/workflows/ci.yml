@@ -1,6 +1,5 @@
-name: CI - Test All Services
+name: CI Pipeline
 
-# Trigger workflow saat ada push atau pull request ke main
 on:
   push:
     branches:
@@ -10,88 +9,65 @@ on:
       - main
 
 jobs:
-
-  # 1️⃣ Test Vote App (Python)
-  test-vote:
-    name: Test Vote App
+  vote:
+    name: Test Vote Service
     runs-on: ubuntu-latest
-
     steps:
-      # Checkout kode
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      # Set Python versi 3.11
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
-
-      # Install dependencies
-      - name: Install dependencies
-        run: |
-          cd vote
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      # Run tests
-      - name: Run tests
-        run: |
-          cd vote
-          pytest
-
-  # 2️⃣ Test Worker App (.NET)
-  test-worker:
-    name: Test Worker App
-    runs-on: ubuntu-latest
-    needs: test-vote  # optional: jalankan setelah vote selesai
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Setup .NET 7 SDK
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '7.0.x'
-
-      # Restore dependencies
-      - name: Restore dependencies
-        run: |
-          cd worker
-          dotnet restore
-
-      # Run tests
-      - name: Run tests
-        run: |
-          cd worker
-          dotnet test
-
-  # 3️⃣ Test Result App (Node.js)
-  test-result:
-    name: Test Result App
-    runs-on: ubuntu-latest
-    needs: test-worker  # optional: jalankan setelah worker selesai
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Setup Node.js
-      - name: Setup Node
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      # Install dependencies
+      - name: Install dependencies
+        run: |
+          cd vote
+          npm install
+
+      - name: Run tests
+        run: |
+          cd vote
+          npm test
+
+  result:
+    name: Test Result Service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
       - name: Install dependencies
         run: |
           cd result
           npm install
 
-      # Run tests
       - name: Run tests
         run: |
           cd result
           npm test
+
+  worker:
+    name: Test Worker Service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.0.x'
+
+      - name: Restore dependencies
+        run: |
+          cd worker
+          dotnet restore
+
+      - name: Run tests
+        run: |
+          cd worker
+          dotnet test
