@@ -1,65 +1,54 @@
-# Example Voting App
+# Voting App - 99Group DevOps Challenge
 
-A simple distributed application running across multiple Docker containers.
+Halo tim 99Group, perkenalkan nama saya **[MUHAMMAD ROBBY KUSUMAH]**.
 
-## Getting started
+Selamat datang di submission saya untuk tantangan DevOps Internship. Di sini, saya tidak hanya sekadar menjalankan aplikasi, tetapi juga membangun fondasi DevOps yang baik: automasi, containerization, dan perencanaan untuk production.
 
-Download [Docker Desktop](https://www.docker.com/products/docker-desktop) for Mac or Windows. [Docker Compose](https://docs.docker.com/compose) will be automatically installed. On Linux, make sure you have the latest version of [Compose](https://docs.docker.com/compose/install/).
+### 🚀 **Link Video Walkthrough**
+[]
 
-This solution uses Python, Node.js, .NET, with Redis for messaging and Postgres for storage.
+---
 
-Run in this directory to build and run the app:
+## ⚙️ Cara Menjalankan Proyek Ini (Getting Started)
 
-```shell
-docker compose up
-```
+Saya sudah merancang agar proyek ini bisa berjalan di komputer mana pun hanya dengan beberapa perintah.
 
-The `vote` app will be running at [http://localhost:8080](http://localhost:8080), and the `results` will be at [http://localhost:8081](http://localhost:8081).
+**Prasyarat:**
+* Git
+* Docker & Docker Compose
 
-Alternately, if you want to run it on a [Docker Swarm](https://docs.docker.com/engine/swarm/), first make sure you have a swarm. If you don't, run:
+**Langkah-langkah:**
+1.  **Clone repositori** ini ke komputer Anda.
+2.  **Masuk ke direktori proyek** melalui terminal.
+3.  Jalankan `docker-compose up --build`. Perintah ini akan secara otomatis membangun *image* untuk setiap service dari `Dockerfile` yang sudah saya siapkan dan menjalankannya.
+4.  Selesai! Buka browser Anda dan akses:
+    * **Aplikasi Voting**: `http://localhost:5000`
+    * **Halaman Hasil**: `http://localhost:5001`
+5.  Untuk mematikan semua service, kembali ke terminal, tekan `Ctrl + C`, lalu jalankan `docker-compose down`.
 
-```shell
-docker swarm init
-```
+---
 
-Once you have your swarm, in this directory run:
+## 💡 Pendekatan dan Keputusan Desain Saya
 
-```shell
-docker stack deploy --compose-file docker-stack.yml vote
-```
+Berikut adalah pemikiran di balik beberapa pilihan teknis yang saya buat:
 
-## Run the app in Kubernetes
+#### 1. Containerization yang Efisien
+Tujuan utama saya adalah agar siapa pun di tim bisa menjalankan aplikasi ini dengan satu perintah. `docker-compose` adalah pilihan yang jelas. Untuk `Dockerfile`-nya, saya tidak hanya membuatnya berjalan, tapi saya optimalkan menggunakan **multi-stage builds**. Hasilnya? *Image* yang jauh lebih kecil, lebih aman, dan proses *build* yang lebih cepat—semua adalah praktik terbaik di industri.
 
-The folder k8s-specifications contains the YAML specifications of the Voting App's services.
+#### 2. CI sebagai Penjaga Gerbang Kualitas
+Saya menggunakan **GitHub Actions** untuk membuat pipeline CI sederhana. Tujuannya adalah sebagai 'penjaga gerbang' kualitas. Setiap kali ada kode baru yang akan digabung ke *branch* `main`, pipeline ini akan otomatis berjalan untuk memastikan dependensi ter-install dengan benar dan tidak ada yang rusak. Ini adalah langkah pertama menuju automasi yang lebih canggih.
 
-Run the following command to create the deployments and services. Note it will create these resources in your current namespace (`default` if you haven't changed it.)
+#### 3. Infrastructure as Code (IaC) sebagai Fondasi
+Meskipun ini bonus, saya percaya IaC adalah fondasi DevOps. Saya menyertakan file `main.tf` (Terraform) sederhana untuk mendefinisikan S3 bucket. Ini menunjukkan bagaimana kita bisa mulai mengelola infrastruktur cloud kita menggunakan kode—yang membuatnya bisa di-*version control*, di-*review*, dan diterapkan ulang dengan konsisten.
 
-```shell
-kubectl create -f k8s-specifications/
-```
+---
 
-The `vote` web app is then available on port 31000 on each host of the cluster, the `result` web app is available on port 31001.
+## 📈 Apa yang Akan Saya Lakukan Selanjutnya?
 
-To remove them, run:
+DevOps adalah tentang perbaikan berkelanjutan. Jika saya punya lebih banyak waktu, ini adalah hal-hal yang akan saya kerjakan berikutnya:
 
-```shell
-kubectl delete -f k8s-specifications/
-```
+1.  **Pengujian yang Serius (Robust Testing):** Menambahkan *unit test* dan *integration test* yang sesungguhnya, lalu menjalankannya secara otomatis di pipeline CI untuk benar-benar memastikan kualitas kode.
+2.  **Keamanan Terintegrasi (Shift-Left Security):** Mengintegrasikan pemindai keamanan seperti **Trivy** langsung di pipeline CI. Ini akan memindai *vulnerability* pada *image* Docker sebelum mereka sampai ke produksi.
+3.  **Pipeline Deployment Otomatis (CD):** Membangun *workflow* lanjutan di GitHub Actions untuk secara otomatis mem-push *image* yang sudah lolos uji ke *container registry* (seperti Docker Hub atau AWS ECR), lalu men-deploy-nya ke lingkungan *staging* atau bahkan produksi.
 
-## Architecture
-
-![Architecture diagram](architecture.excalidraw.png)
-
-* A front-end web app in [Python](/vote) which lets you vote between two options
-* A [Redis](https://hub.docker.com/_/redis/) which collects new votes
-* A [.NET](/worker/) worker which consumes votes and stores them in…
-* A [Postgres](https://hub.docker.com/_/postgres/) database backed by a Docker volume
-* A [Node.js](/result) web app which shows the results of the voting in real time
-
-## Notes
-
-The voting application only accepts one vote per client browser. It does not register additional votes if a vote has already been submitted from a client.
-
-This isn't an example of a properly architected perfectly designed distributed app... it's just a simple
-example of the various types of pieces and languages you might see (queues, persistent data, etc), and how to
-deal with them in Docker at a basic level.
+Terima kasih telah meluangkan waktu untuk meninjau pekerjaan saya!
