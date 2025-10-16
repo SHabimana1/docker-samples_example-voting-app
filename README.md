@@ -1,7 +1,6 @@
 # 99Group Voting App - Role Challenge 
 
 Aplikasi terdiri dari 5 service utama:
-
 1. Vote: Web berbasis Flask (Python) untuk memberi suara
 2. Result: Web berbasis Node.js untuk menampilkan hasil
 3. Worker: Berbasis .NET yang memproses suara
@@ -11,12 +10,10 @@ Aplikasi terdiri dari 5 service utama:
 ---
 
 How to do it
-
 - Docker & Docker Compose terinstal
 - Git
 
 Menjalankan secara lokal
-
 ```bash
 git clone https://github.com/sblrm/example-voting-app.git
 cd example-voting-app
@@ -24,7 +21,6 @@ docker-compose up --build
 ```
 
 Akses aplikasi di browser:
-
 * Vote App: [http://localhost:5000](http://localhost:5000)
 * Result App: [http://localhost:5001](http://localhost:5001)
 
@@ -33,7 +29,6 @@ Akses aplikasi di browser:
 CI/CD Pipeline
 
 Menggunakan GitHub Actions untuk otomatisasi:
-
 1. Menjalankan pipeline setiap push/PR ke branch `main`
 2. Menjalankan unit test untuk service `vote` dan `result`
 3. Build image Docker untuk memvalidasi
@@ -43,7 +38,6 @@ Keuntungan: otomatisasi testing dan build sehingga mempermudah collaborate dan d
 ---
 
 Praktik Docker yang Diterapkan
-
 1. Multi-Stage Build: mengurangi ukuran image hingga 70%
 2. Non-root User: meningkatkan keamanan container
 3. Base Image Minimal (Alpine): mempercepat deployment
@@ -52,10 +46,9 @@ Praktik Docker yang Diterapkan
 
 ---
 
-Infrastruktur sebagai Kode (IaC)
+Infrastructure as Code (IaC)
 
 Menggunakan Terraform untuk provisioning resource seperti:
-
 * S3 Bucket untuk penyimpanan artefak
 * EC2 Instance sebagai host Docker
 * Security Group untuk pengaturan akses jaringan
@@ -72,14 +65,12 @@ terraform apply
 Strategi Monitoring
 
 Aplikasi ini menggunakan stack open-source untuk monitoring dasar:
-
 1. Prometheus: pengumpulan metrik
 2. Grafana: visualisasi metrik
 3. Loki: pengelolaan log
 4. AlertManager: notifikasi alert
 
 Metrik utama yang dipantau:
-
 1. Laju permintaan (Request Rate)
 2. Waktu respon (Latency)
 3. Error Rate (4xx & 5xx)
@@ -91,7 +82,6 @@ Detail konfigurasi monitoring tersedia di file [`monitoring_plan.md`](monitoring
 ---
 
 Alasan Desain
-
 1. Multi-stage Build: Image lebih ringan dan aman
 2. Docker Compose Networks: Keamanan antar service
 3. GitHub Actions CI/CD: Otomatisasi testing dan build
@@ -101,7 +91,6 @@ Alasan Desain
 ---
 
 Rencana Pengembangan Selanjutnya
-
 - Jangka Pendek (1–2 Minggu)
 
 1. Tambahkan endpoint `/health` dan `/ready` untuk health check
@@ -109,13 +98,11 @@ Rencana Pengembangan Selanjutnya
 3. Penambahan log aggregation dengan Loki
 
 - Jangka Menengah (1–2 Bulan)
-
 1. Helm chart untuk deployment Kubernetes
 2. Staging environment dengan docker-compose terpisah
 3. Pengelolaan secrets menggunakan AWS Secrets Manager
 
 - Jangka Panjang (3–6 Bulan)
-
 1. Migrasi ke Kubernetes
 2. Implementasi service mesh (Istio)
 3. Distributed tracing (Jaeger)
@@ -124,7 +111,6 @@ Rencana Pengembangan Selanjutnya
 ---
 
 Testing
-
 ```bash
 docker-compose build
 docker-compose up -d
