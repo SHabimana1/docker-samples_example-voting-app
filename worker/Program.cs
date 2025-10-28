@@ -13,7 +13,6 @@ namespace Worker
 {
     public class Program
     {
-        // Prometheus metrics
         private static readonly Counter VotesProcessed = Metrics
             .CreateCounter("worker_votes_processed_total", "Total number of votes processed");
         
@@ -28,7 +27,6 @@ namespace Worker
 
         public static int Main(string[] args)
         {
-            // Start metrics server on port 8080
             var metricsServer = new MetricServer(port: 8080);
             metricsServer.Start();
             Console.WriteLine("Metrics server started on port 8080");
@@ -41,18 +39,14 @@ namespace Worker
                 RedisConnected.Set(1);
                 var redis = redisConn.GetDatabase();
 
-                // Keep alive is not implemented in Npgsql yet. This workaround was recommended:
-                // https://github.com/npgsql/npgsql/issues/1214#issuecomment-235828359
                 var keepAliveCommand = pgsql.CreateCommand();
                 keepAliveCommand.CommandText = "SELECT 1";
 
                 var definition = new { vote = "", voter_id = "" };
                 while (true)
                 {
-                    // Slow down to prevent CPU spike, only query each 100ms
                     Thread.Sleep(100);
 
-                    // Reconnect redis if down
                     if (redisConn == null || !redisConn.IsConnected) {
                         Console.WriteLine("Reconnecting Redis");
                         RedisConnected.Set(0);
@@ -74,7 +68,7 @@ namespace Worker
                             DbConnected.Set(1);
                         }
                         else
-                        { // Normal +1 vote requested
+                        {
                             try
                             {
                                 UpdateVote(pgsql, vote.voter_id, vote.vote);
