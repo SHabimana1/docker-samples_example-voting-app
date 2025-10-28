@@ -23,14 +23,32 @@ cd example-voting-app
 docker-compose up --build
 ```
 
-Akses aplikasi di browser:
+## Akses Aplikasi
 
-* Vote App: [http://localhost:5000](http://localhost:5000)
-* Result App: [http://localhost:5001](http://localhost:5001)
+Setelah semua container berjalan, akses aplikasi di browser:
+
+Vote App: [http://localhost:5000](http://localhost:5000) - Untuk memberikan suara
+Result App: [http://localhost:5001](http://localhost:5001) - Untuk melihat hasil voting
+Grafana: [http://localhost:3000](http://localhost:3000) - Dashboard monitoring (admin/admin)
+Prometheus: [http://localhost:9090](http://localhost:9090) - Metrics explorer
 
 ---
 
-CI/CD Pipeline
+## Monitoring & Logging
+
+Aplikasi dilengkapi dengan Grafana Stack:
+1. Prometheus: Metrics collection dari Worker service
+2. Grafana: Dashboard visualisasi (login: admin/admin)
+3. Loki + Promtail: Centralized logging dari Docker containers
+
+Worker service diimplementasikan dengan metrics:
+1. `worker_votes_processed_total`: Total votes processed
+2. `worker_redis_connected`: Redis connection status
+3. `worker_db_connected`: Database connection status
+
+---
+
+## CI/CD Pipeline
 
 Menggunakan GitHub Actions untuk otomatisasi:
 
@@ -42,7 +60,7 @@ Keuntungan: otomatisasi testing dan build sehingga mempermudah collaborate dan d
 
 ---
 
-Praktik Docker yang Diterapkan
+## Praktik Docker yang Diterapkan
 
 1. Multi-Stage Build: mengurangi ukuran image hingga 70%
 2. Non-root User: meningkatkan keamanan container
@@ -52,7 +70,7 @@ Praktik Docker yang Diterapkan
 
 ---
 
-Infrastruktur sebagai Kode (IaC)
+## Infrastruktur sebagai Kode (IaC)
 
 Menggunakan Terraform untuk provisioning resource seperti:
 
@@ -69,28 +87,7 @@ terraform apply
 
 ---
 
-Strategi Monitoring
-
-Aplikasi ini menggunakan stack open-source untuk monitoring dasar:
-
-1. Prometheus: pengumpulan metrik
-2. Grafana: visualisasi metrik
-3. Loki: pengelolaan log
-4. AlertManager: notifikasi alert
-
-Metrik utama yang dipantau:
-
-1. Laju permintaan (Request Rate)
-2. Waktu respon (Latency)
-3. Error Rate (4xx & 5xx)
-4. Penggunaan resource (CPU, Memory)
-5. Container health (status, restarts)
-
-Detail konfigurasi monitoring tersedia di file [`monitoring_plan.md`](monitoring_plan.md)
-
----
-
-Alasan Desain
+## Alasan Desain
 
 1. Multi-stage Build: Image lebih ringan dan aman
 2. Docker Compose Networks: Keamanan antar service
@@ -100,7 +97,7 @@ Alasan Desain
 
 ---
 
-Rencana Pengembangan Selanjutnya
+## Rencana Pengembangan Selanjutnya
 
 - Jangka Pendek (1–2 Minggu)
 
@@ -123,7 +120,7 @@ Rencana Pengembangan Selanjutnya
 
 ---
 
-Testing
+## Testing
 
 ```bash
 docker-compose build
@@ -134,7 +131,7 @@ curl http://localhost:5001  # Halaman hasil voting
 
 ---
 
-Pemeliharaan & Backup
+## Pemeliharaan & Backup
 
 1. Backup database otomatis ke S3
 2. Konfigurasi tersimpan di Git (version control)

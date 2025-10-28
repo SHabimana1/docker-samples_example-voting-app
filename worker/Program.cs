@@ -7,17 +7,38 @@ using System.Threading;
 using Newtonsoft.Json;
 using Npgsql;
 using StackExchange.Redis;
+using Prometheus;
 
 namespace Worker
 {
     public class Program
     {
+        // Prometheus metrics
+        private static readonly Counter VotesProcessed = Metrics
+            .CreateCounter("worker_votes_processed_total", "Total number of votes processed");
+        
+        private static readonly Counter VotesErrors = Metrics
+            .CreateCounter("worker_votes_errors_total", "Total number of vote processing errors");
+        
+        private static readonly Gauge RedisConnected = Metrics
+            .CreateGauge("worker_redis_connected", "Redis connection status (1=connected, 0=disconnected)");
+        
+        private static readonly Gauge DbConnected = Metrics
+            .CreateGauge("worker_db_connected", "Database connection status (1=connected, 0=disconnected)");
+
         public static int Main(string[] args)
         {
+            // Start metrics server on port 8080
+            var metricsServer = new MetricServer(port: 8080);
+            metricsServer.Start();
+            Console.WriteLine("Metrics server started on port 8080");
+
             try
             {
                 var pgsql = OpenDbConnection("Server=db;Username=postgres;Password=postgres;");
+                DbConnected.Set(1);
                 var redisConn = OpenRedisConnection("redis");
+                RedisConnected.Set(1);
                 var redis = redisConn.GetDatabase();
 
                 // Keep alive is not implemented in Npgsql yet. This workaround was recommended:
@@ -34,8 +55,10 @@ namespace Worker
                     // Reconnect redis if down
                     if (redisConn == null || !redisConn.IsConnected) {
                         Console.WriteLine("Reconnecting Redis");
+                        RedisConnected.Set(0);
                         redisConn = OpenRedisConnection("redis");
                         redis = redisConn.GetDatabase();
+                        RedisConnected.Set(1);
                     }
                     string json = redis.ListLeftPopAsync("votes").Result;
                     if (json != null)
@@ -46,11 +69,22 @@ namespace Worker
                         if (!pgsql.State.Equals(System.Data.ConnectionState.Open))
                         {
                             Console.WriteLine("Reconnecting DB");
+                            DbConnected.Set(0);
                             pgsql = OpenDbConnection("Server=db;Username=postgres;Password=postgres;");
+                            DbConnected.Set(1);
                         }
                         else
                         { // Normal +1 vote requested
-                            UpdateVote(pgsql, vote.voter_id, vote.vote);
+                            try
+                            {
+                                UpdateVote(pgsql, vote.voter_id, vote.vote);
+                                VotesProcessed.Inc();
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.Error.WriteLine($"Error updating vote: {ex.Message}");
+                                VotesErrors.Inc();
+                            }
                         }
                     }
                     else

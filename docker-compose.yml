@@ -15,6 +15,9 @@ services:
     depends_on:
       - redis
     restart: unless-stopped
+    labels:
+      logging: "promtail"
+      app: "voting-app"
 
   result:
     build: ./result
@@ -28,15 +31,24 @@ services:
     depends_on:
       - db
     restart: unless-stopped
+    labels:
+      logging: "promtail"
+      app: "voting-app"
 
   worker:
     build: ./worker
+    ports:
+      - "8080:8080"
     networks:
       - back-tier
+      - monitoring
     depends_on:
       - redis
       - db
     restart: unless-stopped
+    labels:
+      logging: "promtail"
+      app: "voting-app"
 
   redis:
     image: redis:alpine
@@ -57,11 +69,83 @@ services:
     networks:
       - back-tier
     restart: unless-stopped
+    labels:
+      logging: "promtail"
+      app: "voting-app"
+
+  # Monitoring Stack
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - monitoring
+      - back-tier
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+      - loki
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - monitoring
+    volumes:
+      - loki-data:/loki
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    volumes:
+      - ./promtail-config.yml:/etc/promtail/config.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - monitoring
+    depends_on:
+      - loki
+    restart: unless-stopped
 
 networks:
   front-tier:
   back-tier:
+  monitoring:
 
 volumes:
   redis-data:
   db-data:
+  prometheus-data:
+  grafana-data:
+  loki-data:
