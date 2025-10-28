@@ -16,20 +16,15 @@ scrape_configs:
         refresh_interval: 5s
     
     relabel_configs:
-      # Only scrape containers in the voting app
-      - source_labels: ['__meta_docker_container_name']
-        regex: '/(example-voting-app-.*)'
-        target_label: 'container'
-      
-      # Extract service name (vote, result, worker, etc)
-      - source_labels: ['__meta_docker_container_name']
-        regex: '/example-voting-app-(.*)-.+'
-        target_label: 'service'
-      
-      # Add app label
-      - replacement: 'voting-app'
-        target_label: 'app'
-      
-      # Container image
+      # Extract compose service name
       - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
         target_label: 'compose_service'
+      
+      # Extract compose project name
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: 'compose_project'
+      
+      # Container name
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'

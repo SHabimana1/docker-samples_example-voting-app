@@ -353,7 +353,7 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "{app=\"voting-app\"}",
+          "expr": "{compose_project=\"example-voting-app\"}",
           "refId": "A"
         }
       ],
@@ -388,7 +388,7 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "{app=\"voting-app\", service=\"worker\"}",
+          "expr": "{compose_service=\"worker\"}",
           "refId": "A"
         }
       ],
@@ -423,7 +423,7 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "{app=\"voting-app\", service=\"vote\"}",
+          "expr": "{compose_service=\"vote\"}",
           "refId": "A"
         }
       ],
