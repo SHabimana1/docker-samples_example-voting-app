@@ -1,82 +1,55 @@
-name: Build Result
-# template source: https://github.com/dockersamples/.github/blob/main/templates/call-docker-build.yaml
+name: Build and Push Docker image to ACR (result)
 
 on:
-  # we want pull requests so we can build(test) but not push to image registry
-  push:
-    branches:
-      - 'main'
-    # only build when important files change
-    paths:
-      - 'result/**'
-      - '.github/workflows/call-docker-build-result.yaml'
+  workflow_dispatch:
   pull_request:
     branches:
-      - 'main'
-    # only build when important files change
+      - master
+    paths:
+      - 'result/**'
+      - '.github/workflows/call-docker-build-result.yaml'
+  push:
+    branches:
+      - master
     paths:
       - 'result/**'
       - '.github/workflows/call-docker-build-result.yaml'
 
+env:
+  ACR_NAME: gitopsdevacr        
+  IMAGE_NAME: result          
+  DOCKERFILE_PATH: result/Dockerfile
+
 jobs:
-  call-docker-build:
+  build-and-push:
+    runs-on: ubuntu-latest
 
-    name: Result Call Docker Build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    uses: dockersamples/.github/.github/workflows/reusable-docker-build.yaml@main
+      - name: Extract version from package.json
+        id: get_version
+        run: |
+          VERSION=$(jq -r .version result/package.json)
+          echo "App version: $VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
-    permissions:
-      contents: read
-      packages: write # needed to push docker image to ghcr.io
-      pull-requests: write # needed to create and update comments in PRs
-    
-    secrets:
+      - name: Build Docker image
+        run: |
+          docker build -f $DOCKERFILE_PATH -t $ACR_NAME.azurecr.io/$IMAGE_NAME:${{ steps.get_version.outputs.VERSION }} .
 
-      # Only needed if with:dockerhub-enable is true below
-      dockerhub-username: ${{ secrets.DOCKERHUB_USERNAME }}
+      - name: Log in to Azure
+        if: github.ref == 'refs/heads/master'
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          # this secret should contain JSON output from `az ad sp create-for-rbac`
 
-      # Only needed if with:dockerhub-enable is true below
-      dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
-
-    with:
       
-      ### REQUIRED
-      ### ENABLE ONE OR BOTH REGISTRIES
-      ### tell docker where to push.
-      ### NOTE if Docker Hub is set to true, you must set secrets above and also add account/repo/tags below
-      dockerhub-enable: true
-      ghcr-enable: true
+      - name: Docker build and push to ACR
+        if: github.ref == 'refs/heads/master'
+        run: |
+          az acr login --name $ACR_NAME
+          docker push $ACR_NAME.azurecr.io/$IMAGE_NAME:$IMAGE_TAG
 
-      ### REQUIRED 
-      ### A list of the account/repo names for docker build. List should match what's enabled above
-      ### defaults to:
-      image-names: |
-        ghcr.io/dockersamples/example-voting-app-result
-        dockersamples/examplevotingapp_result
-      
-      ### REQUIRED set rules for tagging images, based on special action syntax:
-      ### https://github.com/docker/metadata-action#tags-input
-      ### defaults to:
-      tag-rules: |
-        type=raw,value=latest,enable=${{ endsWith(github.ref, github.event.repository.default_branch) }}
-        type=raw,value=before,enable=${{ endsWith(github.ref, github.event.repository.default_branch) }}
-        type=raw,value=after,enable=${{ endsWith(github.ref, github.event.repository.default_branch) }}
-        type=ref,event=pr
-      
-      ### path to where docker should copy files into image
-      ### defaults to root of repository (.)
-      context: result
-      
-      ### Dockerfile alternate name. Default is Dockerfile (relative to context path)
-      # file: Containerfile
-
-      ### build stage to target, defaults to empty, which builds to last stage in Dockerfile
-      # target:
-      
-      ### platforms to build for, defaults to linux/amd64
-      ### other options: linux/amd64,linux/arm64,linux/arm/v7
-      platforms: linux/amd64,linux/arm64,linux/arm/v7
-      
-      ### Create a PR comment with image tags and labels
-      ### defaults to false
-      # comment-enable: false
