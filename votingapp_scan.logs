@@ -1,0 +1,129 @@
+{"level":"info","version":"1.23.0","commit":"92edf73","time":"2025-11-04T17:47:03-05:00","message":"Starting analysis with Sysdig scanner"}
+{"level":"info","time":"2025-11-04T17:47:03-05:00","message":"Using path for the cache: /Users/owner/Library/Caches/inlineScannerCache.db"}
+{"level":"info","dbVersion":"V3","time":"2025-11-04T17:47:04-05:00","message":"Vuln DB version detected"}
+{"level":"info","time":"2025-11-04T17:47:04-05:00","message":"Retrieving MainDB"}
+{"level":"info","time":"2025-11-04T17:47:04-05:00","message":"Using local MainDB located at /usr/local/bin/main.db/sysdig-db-data since it is already up to date"}
+{"level":"info","time":"2025-11-04T17:47:04-05:00","message":"Using cached DB file on path /usr/local/bin/main.db/sysdig-db-data"}
+{"level":"info","error":"failed parsing OnPrem version : Malformed version: ","time":"2025-11-04T17:47:04-05:00","message":"unable to get onPrem version, will assume SaaS environment"}
+{"level":"info","time":"2025-11-04T17:47:04-05:00","message":"Loading MainDB V3 from: /usr/local/bin/main.db/sysdig-db-data"}
+{"level":"info","time":"2025-11-04T17:47:04-05:00","message":"Done: MainDB V3 loaded"}
+{"level":"info","imgName":"pull://nginx:latest","time":"2025-11-04T17:47:04-05:00","message":"Retrieving image"}
+{"level":"info","time":"2025-11-04T17:47:05-05:00","message":"first platform available in manifest is (linux/amd64), will use it"}
+{"level":"info","imgName":"pull://nginx:latest","time":"2025-11-04T17:47:06-05:00","message":"Done: image retrieved"}
+{"level":"info","time":"2025-11-04T17:47:06-05:00","message":"Start analyzing image"}
+{"level":"info","url":"https://app.us4.sysdig.com/api/scanning/sbom/v2/base-images/search","layersDigest":["sha256:36d06fe0cbc654e5f67d58c960ed33e53127e4a3288d8ce6f6a60a9c311794d4","sha256:6e19587ac5416790488e2e259fbb4e14ea409908bff5a4aab5e01760fc63c15a","sha256:8feb164cd673e978e6287e249339b5fa20d7aa46ebd09923092ae74dec88419a","sha256:2ced4cd78a7bdbb622141c41c9e83772f7f81dedd43527ec2df07c8fa6632f08","sha256:99cd1b1b6a4397c3835be9a48d6c04fdd8997bb15f29d0cb2cfcbaf3844b0d24","sha256:d81df94f8d07136711ea4ff25d1f14b8a9aad1e6816ab46ce25c840ddc8f326e","sha256:d7217c60dca400c2c3e6367dd67b30cf429e1d21a0f258ec37c0abb7a446ffbe"],"time":"2025-11-04T17:47:09-05:00","message":"base images resolved"}
+{"level":"info","assetID":"sha256:d261fd19cb63238535ab80d4e1be1d9e7f6c8b5a28a820188968dd3e6f06072d","pullstring":"nginx:latest","analyzerInfo":{"version":"v0.0.0-20251013122706-5c1e12a97f07"},"time":"2025-11-04T17:47:09-05:00","message":"{\"shouldExtract\":true}\n"}
+{"level":"info","time":"2025-11-04T17:47:09-05:00","message":"Start matching vulnerabilities"}
+{"level":"info","time":"2025-11-04T17:47:09-05:00","message":"Matched 150 packages"}
+{"level":"info","time":"2025-11-04T17:47:09-05:00","message":"attempting to use the latest policy model"}
+{"level":"warn","rep":"failed evaluating policies: failed to retrieve policies: failed to get policies: failed to unmarshal response body: proto: syntax error (line 1:1): invalid value <","time":"2025-11-04T17:47:10-05:00","message":"failed to evaluate with the new policy model, using the older version"}
+{"level":"info","time":"2025-11-04T17:47:10-05:00","message":"using the legacy policy model"}
+{"level":"info","time":"2025-11-04T17:47:10-05:00","message":"Start policies evaluation"}
+{"level":"info","result":"passed","time":"2025-11-04T17:47:10-05:00","message":"End policies evaluation"}
+{"level":"info","time":"2025-11-04T17:47:10-05:00","message":"Start risks acceptance evaluation"}
+{"level":"info","time":"2025-11-04T17:47:10-05:00","message":"Scan Result upload in progress"}
+{"level":"info","scan-result-id":"1874ef443ac59748faee8c01a82e2360","scan-result-url":"https://app.us4.sysdig.com/secure/#/vulnerabilities/results/1874ef443ac59748faee8c01a82e2360/overview","time":"2025-11-04T17:47:11-05:00","message":"Scan Result uploaded"}
+{"level":"info","duration":"7.103251714s","time":"2025-11-04T17:47:11-05:00","message":"Done"}
+
+
+
+sysdig-cli-scanner scan /tmp/examplevotingapp_vote.tar --standalone
+
+2025-11-04T17:43:33-05:00 Starting analysis with Sysdig scanner version 1.23.0
+2025-11-04T17:43:33-05:00 Using local MainDB (skipping DB update)...
+2025-11-04T17:43:33-05:00 Done, using cached DB
+2025-11-04T17:43:33-05:00 Loading MainDB V3...
+2025-11-04T17:43:33-05:00 Done
+2025-11-04T17:43:33-05:00 Retrieving image...
+2025-11-04T17:43:44-05:00 Unable to get image, for additional information see the logs here: /Users/owner/Documents/Sysdig/example-voting-app/scan-logs. Exiting now
+owner@Owners-MacBook-Pro example-voting-app % 
+owner@Owners-MacBook-Pro example-voting-app % 
+owner@Owners-MacBook-Pro example-voting-app % ./sysdig-cli-scanner -a https://app.us4.sysdig.com/secure pull://nginx:latest
+zsh: no such file or directory: ./sysdig-cli-scanner
+owner@Owners-MacBook-Pro example-voting-app % sysdig-cli-scanner -a https://app.us4.sysdig.com/secure pull://nginx:latest 
+Environment variable `SECURE_API_TOKEN` is required when standalone mode is not active. For usage help, please run with `--help`
+Cannot parse command line options
+owner@Owners-MacBook-Pro example-voting-app % 
+owner@Owners-MacBook-Pro example-voting-app % 
+owner@Owners-MacBook-Pro example-voting-app % export SECURE_API_TOKEN=b7de0bae-8dfd-4bfc-b372-2fb2bdf05918            
+owner@Owners-MacBook-Pro example-voting-app % sysdig-cli-scanner -a https://app.us4.sysdig.com/secure pull://nginx:latest
+2025-11-04T17:47:03-05:00 Starting analysis with Sysdig scanner version 1.23.0
+2025-11-04T17:47:04-05:00 Retrieving MainDB...
+2025-11-04T17:47:04-05:00 Done, using cached DB
+2025-11-04T17:47:04-05:00 Loading MainDB V3...
+2025-11-04T17:47:04-05:00 Done
+2025-11-04T17:47:04-05:00 Retrieving image...
+2025-11-04T17:47:06-05:00 Done
+2025-11-04T17:47:06-05:00 Scan started...
+2025-11-04T17:47:10-05:00 Uploading image sbom to backend...
+2025-11-04T17:47:10-05:00 Uploading scanresult with sbom to backend...
+2025-11-04T17:47:11-05:00 Done
+2025-11-04T17:47:11-05:00 Total execution time 7.103295234s
+
+Type: dockerImage
+ImageID: sha256:d261fd19cb63238535ab80d4e1be1d9e7f6c8b5a28a820188968dd3e6f06072d
+Digest: sha256:1beed3ca46acebe9d3fb62e9067f03d05d5bfa97a00f30938a0a3580563272ad
+BaseOS: debian 13.1
+PullString: nginx:latest
+
+92 vulnerabilities found
+2 Critical (0 fixable)
+12 High (0 fixable)
+3 Medium (0 fixable)
+5 Low (0 fixable)
+70 Negligible (0 fixable)
+
+                            POLICIES EVALUATION
+    Policy: Sysdig Best Practices PASSED (0 failures - 0 risks accepted)
+
+Policies evaluation PASSED at 2025-11-04T17:47:11-05:00
+Full image results here: https://app.us4.sysdig.com/secure/#/vulnerabilities/results/1874ef443ac59748faee8c01a82e2360/overview (id 1874ef443ac59748faee8c01a82e2360)
+Execution logs written to: /Users/owner/Documents/Sysdig/example-voting-app/scan-logs
+
+
+sysdig-cli-scanner -a https://app.us4.sysdig.com/secure pull://docker.io/dockersamples/examplevotingapp_vote:latest
+2025-11-04T17:49:47-05:00 Starting analysis with Sysdig scanner version 1.23.0
+2025-11-04T17:49:47-05:00 Retrieving MainDB...
+2025-11-04T17:49:47-05:00 Done, using cached DB
+2025-11-04T17:49:48-05:00 Loading MainDB V3...
+2025-11-04T17:49:48-05:00 Done
+2025-11-04T17:49:48-05:00 Retrieving image...
+2025-11-04T17:49:49-05:00 Done
+2025-11-04T17:49:49-05:00 Scan started...
+2025-11-04T17:49:52-05:00 Uploading image sbom to backend...
+2025-11-04T17:49:52-05:00 Uploading scanresult with sbom to backend...
+2025-11-04T17:49:53-05:00 Done
+2025-11-04T17:49:53-05:00 Total execution time 5.795543946s
+
+Type: dockerImage
+ImageID: sha256:50482f268ba1f32ac1d4ff623cf76ad4d44a946d3d106db2a1fedbe8467abf7a
+Digest: sha256:7102d3b952ec84e3541ee12e7217e320c52aed60b13501c3158f46376a907466
+BaseOS: debian 12.7
+PullString: docker.io/dockersamples/examplevotingapp_vote:latest
+
+181 vulnerabilities found
+8 Critical (5 fixable)
+41 High (27 fixable)
+49 Medium (33 fixable)
+10 Low (5 fixable)
+73 Negligible (0 fixable)
+
+
+    PACKAGE      TYPE       VERSION        SUGGESTED FIX    CRITICAL  HIGH  MEDIUM  LOW  NEGLIGIBLE  EXPLOIT  
+  libsqlite3-0    os        3.40.1-2      3.40.1-2+deb12u2     3       1      0      0       3          0     
+  libssl3         os    3.0.14-1~deb12u2  3.0.17-1~deb12u3     1       3      1      0       1          0     
+  openssl         os    3.0.14-1~deb12u2  3.0.17-1~deb12u3     1       3      1      0       1          0     
+  perl-base       os    5.36.0-7+deb12u1  5.36.0-7+deb12u2     1       2      0      0       2          0     
+  setuptools    python       65.5.1            70.0.0          1       1      0      0       0          0     
+  libgnutls30     os    3.7.9-2+deb12u3   3.7.9-2+deb12u5      0       4      1      0       1          0     
+  libexpat1       os    2.5.0-1+deb12u1   2.5.0-1+deb12u2      0       4      0      0       2          0     
+  Jinja2        python       3.1.4             3.1.5           0       3      0      0       0          0     
+  libc-bin        os     2.36-9+deb12u8   2.36-9+deb12u10      0       2      1      0       7          0     
+  libc6           os     2.36-9+deb12u8   2.36-9+deb12u10      0       2      1      0       7          0     
+
+                                                                POLICIES EVALUATION
+    Policy: Sysdig Best Practices FAILED (55 failures - 0 risks accepted)
+
+Policies evaluation FAILED at 2025-11-04T17:49:53-05:00
+Full image results here: https://app.us4.sysdig.com/secure/#/vulnerabilities/results/1874ef69f37af240c36eb62e30f4a0d0/overview (id 1874ef69f37af240c36eb62e30f4a0d0)
+Execution logs written to: /Users/owner/Documents/Sysdig/example-voting-app/scan-logs

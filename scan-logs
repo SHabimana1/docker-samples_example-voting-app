@@ -1,0 +1,10 @@
+{"level":"info","version":"1.23.0","commit":"92edf73","time":"2025-11-04T18:07:45-05:00","message":"Starting analysis with Sysdig scanner"}
+{"level":"info","time":"2025-11-04T18:07:45-05:00","message":"Using path for the cache: /Users/owner/Library/Caches/inlineScannerCache.db"}
+{"level":"info","time":"2025-11-04T18:07:45-05:00","message":"Using local MainDB (skipping DB update)"}
+{"level":"info","time":"2025-11-04T18:07:45-05:00","message":"Using cached DB file on path /usr/local/bin/main.db/sysdig-db-data"}
+{"level":"info","time":"2025-11-04T18:07:45-05:00","message":"Offline mode enabled for file analyzers"}
+{"level":"info","time":"2025-11-04T18:07:45-05:00","message":"standalone mode, we won't perform calls to backend"}
+{"level":"info","time":"2025-11-04T18:07:45-05:00","message":"Loading MainDB V3 from: /usr/local/bin/main.db/sysdig-db-data"}
+{"level":"info","time":"2025-11-04T18:07:45-05:00","message":"Done: MainDB V3 loaded"}
+{"level":"info","imgName":"scan","time":"2025-11-04T18:07:45-05:00","message":"Retrieving image"}
+{"level":"error","error":"Unable to get image: image not found from loader","time":"2025-11-04T18:07:57-05:00","message":"Exiting now"}

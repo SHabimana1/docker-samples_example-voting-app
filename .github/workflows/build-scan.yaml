@@ -42,13 +42,22 @@ jobs:
       - name: Build result image
         run: docker build -t $REGISTRY/$REPO/result:latest ./result
 
-      # --- Install Sysdig Scanner ---
+
       - name: Install Sysdig CLI Scanner
         run: |
-          curl -LO curl -LO "https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/$(curl -L -s https://download.sysdig.com/scanning/sysdig-cli-scanner/latest_version.txt)/linux/arm64/sysdig-cli-scanner"
-          chmod +x sysdig-cli-scanner-linux-amd64
-          sudo mv sysdig-cli-scanner-linux-amd64 /usr/local/bin/sysdig-cli-scanner
+          LATEST_VERSION=$(curl -s https://download.sysdig.com/scanning/sysdig-cli-scanner/latest_version.txt)
+          curl -Lo sysdig-cli-scanner "https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/${LATEST_VERSION}/linux/amd64/sysdig-cli-scanner"
+          chmod +x sysdig-cli-scanner
+          sudo mv sysdig-cli-scanner /usr/local/bin/
           sysdig-cli-scanner --version
+
+      # # --- Install Sysdig Scanner ---
+      # - name: Install Sysdig CLI Scanner
+      #   run: |
+      #     curl -LO curl -LO "https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/$(curl -L -s https://download.sysdig.com/scanning/sysdig-cli-scanner/latest_version.txt)/linux/arm64/sysdig-cli-scanner"
+      #     chmod +x sysdig-cli-scanner-linux-amd64
+      #     sudo mv sysdig-cli-scanner-linux-amd64 /usr/local/bin/sysdig-cli-scanner
+      #     sysdig-cli-scanner --version
 
       # --- Scan images ---
       - name: Scan vote image
