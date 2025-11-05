@@ -73,15 +73,15 @@ jobs:
         #   SYSDIG_SECURE_TOKEN: ${{ secrets.SYSDIG_SECURE_TOKEN }}
         run: |
           export SECURE_API_TOKEN=b7de0bae-8dfd-4bfc-b372-2fb2bdf05918 
-          sysdig-cli-scanner -a https://app.us4.sysdig.com/secure pull://docker.io/dockersamples/examplevotingapp_vote:latest
+          sysdig-cli-scanner -a https://app.us4.sysdig.com/secure pull://docker.io/dockersamples/examplevotingapp_vote:before
 
 
-      - name: Scan vote image
-        env:
-          SYSDIG_SECURE_URL: ${{ secrets.SYSDIG_SECURE_URL }}
-          SYSDIG_SECURE_TOKEN: ${{ secrets.SYSDIG_SECURE_TOKEN }}
-        run: |
-          sysdig-cli-scanner -a https://app.us4.sysdig.com/secure pull://docker.io/$REPO/examplevotingapp_vote:latest
+      # - name: Scan vote image
+      #   env:
+      #     SYSDIG_SECURE_URL: ${{ secrets.SYSDIG_SECURE_URL }}
+      #     SYSDIG_SECURE_TOKEN: ${{ secrets.SYSDIG_SECURE_TOKEN }}
+      #   run: |
+      #     sysdig-cli-scanner -a https://app.us4.sysdig.com/secure pull://docker.io/$REPO/examplevotingapp_vote:before
 
       - name: Scan worker image
         env:
