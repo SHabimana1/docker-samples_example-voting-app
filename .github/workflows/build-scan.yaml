@@ -1,0 +1,112 @@
+name: Build & Scan with Sysdig (Docker Hub)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+
+    env:
+      REGISTRY: docker.io
+      REPO: ${{ secrets.REGISTRY_USER }}
+      SYSDIG_SECURE_URL: ${{ secrets.SYSDIG_SECURE_URL }}
+      SYSDIG_SECURE_TOKEN: ${{ secrets.SYSDIG_SECURE_TOKEN }}
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+
+      # --- Build Containers ---
+      - name: Build vote image
+        run: docker build -t $REGISTRY/$REPO/vote:latest ./vote
+
+      - name: Build worker image
+        run: docker build -t $REGISTRY/$REPO/worker:latest ./worker
+
+      - name: Build result image
+        run: docker build -t $REGISTRY/$REPO/result:latest ./result
+
+
+      - name: Install Sysdig CLI Scanner
+        run: |
+          LATEST_VERSION=$(curl -s https://download.sysdig.com/scanning/sysdig-cli-scanner/latest_version.txt)
+          curl -Lo sysdig-cli-scanner "https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/${LATEST_VERSION}/linux/amd64/sysdig-cli-scanner"
+          chmod +x sysdig-cli-scanner
+          sudo mv sysdig-cli-scanner /usr/local/bin/
+          sysdig-cli-scanner --version
+      
+      
+      # --- Environment images ---
+      - name: Debug environment variables
+        env:
+          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+          REPO: ${{ secrets.REGISTRY_USER }}
+          SYSDIG_SECURE_URL: ${{ secrets.SYSDIG_SECURE_URL }}
+          SYSDIG_SECURE_TOKEN: ${{ secrets.SYSDIG_SECURE_TOKEN }}      
+        run: |
+          echo "REGISTRY_USER = $REGISTRY_USER"
+          echo "REGISTRY_TOKEN (masked) = $REGISTRY_TOKEN"
+          echo "REPO = $REPO"
+          echo "SYSDIG_SECURE_URL = $SYSDIG_SECURE_URL"
+          echo "SYSDIG_SECURE_TOKEN = $SYSDIG_SECURE_TOKEN"
+
+      - name: Scan vote image
+        # env:
+        #   SYSDIG_SECURE_URL: ${{ secrets.SYSDIG_SECURE_URL }}
+        #   SYSDIG_SECURE_TOKEN: ${{ secrets.SYSDIG_SECURE_TOKEN }}
+        run: |
+          export SECURE_API_TOKEN=b7de0bae-8dfd-4bfc-b372-2fb2bdf05918 
+          sysdig-cli-scanner -a https://app.us4.sysdig.com/secure pull://docker.io/dockersamples/examplevotingapp_vote:before || true
+
+
+      # - name: Scan vote image
+      #   env:
+      #     SYSDIG_SECURE_URL: ${{ secrets.SYSDIG_SECURE_URL }}
+      #     SYSDIG_SECURE_TOKEN: ${{ secrets.SYSDIG_SECURE_TOKEN }}
+      #   run: |
+      #     sysdig-cli-scanner -a https://app.us4.sysdig.com/secure pull://docker.io/$REPO/examplevotingapp_vote:before
+
+      - name: Scan worker image
+        env:
+          SYSDIG_SECURE_URL: ${{ secrets.SYSDIG_SECURE_URL }}
+          SYSDIG_SECURE_TOKEN: ${{ secrets.SYSDIG_SECURE_TOKEN }}
+        run: |
+          sysdig-cli-scanner -a https://app.us4.sysdig.com/secure pull://docker.io/$REPO/examplevotingapp_worker:latest || true
+
+      - name: Scan result image
+        env:
+          SYSDIG_SECURE_URL: ${{ secrets.SYSDIG_SECURE_URL }}
+          SYSDIG_SECURE_TOKEN: ${{ secrets.SYSDIG_SECURE_TOKEN }}
+        run: |
+          sysdig-cli-scanner -a https://app.us4.sysdig.com/secure pull://docker.io/$REPO/examplevotingapp_result:latest || true
+
+      # # # --- Optional: Push images to Docker Hub (only if scans passed) ---
+      # - name: Push vote image
+      #   run: docker push docker.io/cloudcode510/examplevotingapp_vote:latest
+      # #   run: docker push $REGISTRY/$REPO/examplevotingapp_vote:latest
+
+      # - name: Push worker image
+      #   run: docker push docker.io/cloudcode510/examplevotingapp_worker:latest
+
+      # - name: Push result image
+      #   run: docker push docker.io/cloudcode510/examplevotingapp_result:latest
+
+      # # - name: Push result image
+      # #   run: docker push $REGISTRY/$REPO/examplevotingapp_result:latest

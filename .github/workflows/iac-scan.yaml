@@ -1,0 +1,26 @@
+name: IaC Scan
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  iac-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Sysdig CLI Scanner
+        run: |
+          LATEST_VERSION=$(curl -s https://download.sysdig.com/scanning/sysdig-cli-scanner/latest_version.txt)
+          curl -Lo sysdig-cli-scanner "https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/${LATEST_VERSION}/linux/amd64/sysdig-cli-scanner"
+          chmod +x sysdig-cli-scanner
+          sudo mv sysdig-cli-scanner /usr/local/bin/
+          sysdig-cli-scanner --version
+          
+      - name: IaC scan
+        env:
+          SECURE_API_TOKEN: ${{ secrets.SYSDIG_SECURE_TOKEN }}
+        run: |
+          sysdig-cli-scanner --iac -r -f H --apiurl ${{ secrets.SYSDIG_SECURE_URL }} .
