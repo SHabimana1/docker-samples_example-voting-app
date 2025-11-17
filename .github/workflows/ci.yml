@@ -3,10 +3,10 @@ name: CI Pipeline - Vote and Worker Services
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   build-and-test:
