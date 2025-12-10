@@ -1,29 +1,55 @@
-name: Deploy to AKS
+name: Build and Deploy
 
 on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
 
+env:
+  ACR_NAME: vedranregistry99
+
 jobs:
-  deploy:
+  # JOB 1: BUILD THE IMAGE
+  build:
     runs-on: ubuntu-latest
     steps:
-      # Checkout the code
+      - uses: actions/checkout@v4
+      
+      # 1. Login to your Azure Container Registry
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ACR_NAME }}.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      # 2. Build the 'vote' folder and Push it
+      - name: Build and Push Vote App
+        uses: docker/build-push-action@v5
+        with:
+          context: ./vote
+          push: true
+          # Tag with the commit SHA so every build is unique
+          tags: ${{ env.ACR_NAME }}.azurecr.io/vote:${{ github.sha }}
+
+  # JOB 2: DEPLOY TO AKS
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build  # This ensures we don't deploy unless the build succeeds
+    steps:
       - uses: actions/checkout@v4
 
-      # Log in to Azure (using the Secret)
+      # 1. Login to Azure
       - uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Connect to AKS Cluster
+      # 2. Connect to AKS Cluster
       - uses: azure/aks-set-context@v3
         with:
           resource-group: VotingApp
           cluster-name: VotingAppCluster
 
-      # Deploy the App (Manifests)
+      # 3. Deploy Manifests & Swap Image
       - name: Deploy to Kubernetes
         uses: Azure/k8s-deploy@v4
         with:
@@ -42,3 +68,7 @@ jobs:
             k8s-specifications/policy-allow-vote-redis.yaml
             k8s-specifications/policy-allow-worker.yaml
             k8s-specifications/policy-allow-result-db.yaml
+          # This is the magic part:
+          # It finds the image in vote-deployment.yaml and replaces it with the new one
+          images: |
+            ${{ env.ACR_NAME }}.azurecr.io/vote:${{ github.sha }}
