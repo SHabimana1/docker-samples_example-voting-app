@@ -29,8 +29,6 @@ jobs:
         with:
           action: deploy
           manifests: |
-            k8s-specifications/db-deployment.yaml
-            k8s-specifications/db-service.yaml
             k8s-specifications/redis-deployment.yaml
             k8s-specifications/redis-service.yaml
             k8s-specifications/worker-deployment.yaml
