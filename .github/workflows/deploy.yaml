@@ -1,4 +1,57 @@
-# JOB 2: DEPLOY TO AKS
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  # Your Registry Name
+  ACR_NAME: vedranregistry99
+
+jobs:
+  # ---------------------------------------------------
+  # JOB 1: BUILD ALL IMAGES
+  # ---------------------------------------------------
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # 1. Login to Azure Container Registry
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ACR_NAME }}.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      # 2. Build and Push VOTE
+      - name: Build and Push Vote
+        uses: docker/build-push-action@v5
+        with:
+          context: ./vote
+          push: true
+          tags: ${{ env.ACR_NAME }}.azurecr.io/vote:${{ github.sha }}
+
+      # 3. Build and Push RESULT
+      - name: Build and Push Result
+        uses: docker/build-push-action@v5
+        with:
+          context: ./result
+          push: true
+          tags: ${{ env.ACR_NAME }}.azurecr.io/result:${{ github.sha }}
+
+      # 4. Build and Push WORKER
+      - name: Build and Push Worker
+        uses: docker/build-push-action@v5
+        with:
+          context: ./worker
+          push: true
+          tags: ${{ env.ACR_NAME }}.azurecr.io/worker:${{ github.sha }}
+
+  # ---------------------------------------------------
+  # JOB 2: DEPLOY TO AKS
+  # ---------------------------------------------------
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -10,8 +63,7 @@
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 2. Login to Registry 
-      # The deploy action needs this to verify the images exist
+      # 2. Login to Registry (REQUIRED so K8s can verify the images exist)
       - uses: docker/login-action@v3
         with:
           registry: ${{ env.ACR_NAME }}.azurecr.io
