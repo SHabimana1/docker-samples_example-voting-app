@@ -8,3 +8,6 @@ opentelemetry-instrumentation-flask
 opentelemetry-instrumentation-redis
 opentelemetry-instrumentation-logging
 opentelemetry-exporter-otlp
+opentelemetry-propagator-b3
+opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-proto-http

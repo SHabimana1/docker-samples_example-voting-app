@@ -1,15 +1,20 @@
 using System;
 using System.Data.Common;
-using System.Diagnostics; // Required for Activity
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using Npgsql;
 using Serilog;
 using Serilog.Formatting.Json;
 using StackExchange.Redis;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
 
 namespace Worker
 {
@@ -17,27 +22,53 @@ namespace Worker
     {
         public static int Main(string[] args)
         {
+            // ---- Serilog setup ----
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console(new JsonFormatter())
+                .CreateLogger();
+
             try
             {
+                // ---- Host + DI + OpenTelemetry ----
+                using var host = Host.CreateDefaultBuilder(args)
+                    .ConfigureServices(services =>
+                    {
+                        services.AddOpenTelemetry()
+                            .WithTracing(builder => builder
+                                .AddSource("Worker")
+                                .SetResourceBuilder(
+                                    ResourceBuilder.CreateDefault()
+                                        .AddService("Worker")
+                                )
+                                .AddOtlpExporter(opt =>
+                                {
+                                    opt.Endpoint = new Uri("https://<your-env>.live.dynatrace.com/api/v2/otlp");
+                                    opt.Headers = "Authorization=Api-Token <token>";
+                                })
+                            );
+                    })
+                    .Build();
+
+                var tracerProvider = host.Services.GetRequiredService<TracerProvider>();
+                var tracer = tracerProvider.GetTracer("Worker");
+
+                // ---- Worker infrastructure ----
                 var pgsql = OpenDbConnection("Server=db;Username=postgres;Password=postgres;");
                 var redisConn = OpenRedisConnection("redis");
                 var redis = redisConn.GetDatabase();
 
-                Log.Logger = new LoggerConfiguration()
-                    .WriteTo.Console(new JsonFormatter())
-                    .CreateLogger();
-
                 var keepAliveCommand = pgsql.CreateCommand();
                 keepAliveCommand.CommandText = "SELECT 1";
 
-                // Add 'traceparent' to the definition
                 var definition = new { vote = "", voter_id = "", traceparent = "" };
 
+                // ---- Main worker loop ----
                 while (true)
                 {
                     Thread.Sleep(100);
 
-                    if (redisConn == null || !redisConn.IsConnected) {
+                    if (redisConn == null || !redisConn.IsConnected)
+                    {
                         Console.WriteLine("Reconnecting Redis");
                         redisConn = OpenRedisConnection("redis");
                         redis = redisConn.GetDatabase();
@@ -48,21 +79,31 @@ namespace Worker
                     {
                         var vote = JsonConvert.DeserializeAnonymousType(json, definition);
 
-                        // Start Distributed Trace Activity
-                        // We use the W3C 'traceparent' passed from Python
-                        using (var activity = new Activity("ProcessingVote"))
+                        // ---- Extract parent trace context ----
+                        ActivityContext parentContext = default;
+                        bool hasParent = false;
+
+                        if (!string.IsNullOrEmpty(vote.traceparent))
                         {
-                            if (!string.IsNullOrEmpty(vote.traceparent))
-                            {
-                                activity.SetParentId(vote.traceparent);
-                            }
-                            activity.Start();
+                            parentContext = ActivityContext.Parse(vote.traceparent, null);
+                            hasParent = true;
+                        }
 
-                            // Explicitly add Activity/Trace ID to Log context
-                            Log.ForContext("traceId", activity.TraceId.ToString())
-                               .ForContext("spanId", activity.SpanId.ToString())
-                               .Information("Processing vote for {VoteChoice} by {VoterId}", vote.vote, vote.voter_id);
+                        // ---- Create Worker Activity with correct parent ----
+                        using (var activity = hasParent
+                            ? tracer.StartActivity(
+                                "Worker.ProcessVote",
+                                ActivityKind.Consumer,
+                                parentContext)
+                            : tracer.StartActivity("Worker.ProcessVote", ActivityKind.Consumer))
+                        {
+                            // Add logging fields
+                            Log.ForContext("traceId", activity?.TraceId.ToString())
+                               .ForContext("spanId", activity?.SpanId.ToString())
+                               .Information("Processing vote for {VoteChoice} by {VoterId}",
+                                    vote.vote, vote.voter_id);
 
+                            // ---- DB Logic ----
                             if (!pgsql.State.Equals(System.Data.ConnectionState.Open))
                             {
                                 Console.WriteLine("Reconnecting DB");
@@ -72,9 +113,6 @@ namespace Worker
                             {
                                 UpdateVote(pgsql, vote.voter_id, vote.vote);
                             }
-                            
-                            // Stop the activity when done processing this specific vote
-                            activity.Stop();
                         }
                     }
                     else
@@ -89,6 +127,10 @@ namespace Worker
                 return 1;
             }
         }
+
+        // ----------------------------------------
+        // Helpers
+        // ----------------------------------------
 
         private static NpgsqlConnection OpenDbConnection(string connectionString)
         {
