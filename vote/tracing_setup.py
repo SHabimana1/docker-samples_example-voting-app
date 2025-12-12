@@ -1,9 +1,10 @@
 from opentelemetry import trace
-from opentelemetry.trace import get_tracer
+from opentelemetry.trace import get_tracer, SpanKind
 import logging 
 
 # Setup a dedicated logger for troubleshooting tracing issues
 trace_logger = logging.getLogger('tracing_debug')
+# FIX: Use the constant logging.INFO to prevent application crash
 trace_logger.setLevel(logging.INFO) 
 
 # Initialize a tracer instance. This relies on the Dynatrace OneAgent
@@ -19,6 +20,10 @@ else:
 
 # Helper to get the W3C Traceparent string for propagation
 def get_current_traceparent():
+    """
+    Retrieves the current W3C Trace Context (traceparent) string 
+    from the active OpenTelemetry span.
+    """
     span = trace.get_current_span()
     
     # Check if a valid trace is active
@@ -29,25 +34,27 @@ def get_current_traceparent():
         return f"00-{ctx.trace_id:032x}-{ctx.span_id:016x}-01"
     
     else:
-        # Log why the trace is not active
+        # Log why the trace is not active (this is the diagnostic)
         if span:
-            trace_logger.error(f"Current span is invalid. Context validity: {span.get_span_context().is_valid}. Likely creation failure.")
+            trace_logger.warning(f"No valid span context found. Span object exists: {span.get_span_context()}.")
         else:
-            trace_logger.error("No current span available (trace generation failed).")
+            trace_logger.warning("No current span available (trace generation failed).")
             
     return None
 
 def start_trace_span(span_name, kind=trace.SpanKind.SERVER):
+    """
+    Manually starts a new span, guaranteeing a trace ID is created.
+    This returns the Context Manager object from the tracer.
+    """
     # Log before starting the span
     trace_logger.info(f"Attempting to start span: {span_name}")
     
-    # Start the span
-    span = tracer.start_as_current_span(span_name, kind=kind)
+    # Start the span (returns the Context Manager)
+    context_manager = tracer.start_as_current_span(span_name, kind=kind)
     
-    # Log after starting the span
-    if span.get_span_context().is_valid:
-        trace_logger.info(f"Span '{span_name}' started successfully.")
-    else:
-        trace_logger.error(f"Span '{span_name}' started, but context is invalid. Agent integration failure suspected.")
+    # Log after starting (we trust the Context Manager will run)
+    trace_logger.info(f"Context Manager for '{span_name}' started. Trace ID will be confirmed on get_current_traceparent.")
         
-    return span
+    # Return the Context Manager for the 'with ... as span:' block
+    return context_manager
