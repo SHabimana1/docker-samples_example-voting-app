@@ -7,7 +7,6 @@ var express = require('express'),
     server = require('http').Server(app),
     io = require('socket.io')(server);
 
-// Setup Winston Logger (JSON format)
 const winston = require('winston');
 const logger = winston.createLogger({
   format: winston.format.json(),
@@ -24,7 +23,6 @@ io.on('connection', function (socket) {
   });
 });
 
-// Use Environment Variable for DB connection (Senior SRE Best Practice)
 var connectionString = process.env.POSTGRES_CONNECTION_STRING || 'postgres://postgres:postgres@db/postgres';
 
 var pool = new Pool({
@@ -36,7 +34,6 @@ async.retry(
   function(callback) {
     pool.connect(function(err, client, done) {
       if (err) {
-        // FIX: Use logger instead of console.error
         logger.error("Waiting for db", { error: err.message });
       }
       callback(err, client);
@@ -44,10 +41,8 @@ async.retry(
   },
   function(err, client) {
     if (err) {
-      // FIX: Use logger
       return logger.error("Giving up", { error: err.message });
     }
-    // FIX: Removed undefined 'retryCount' variable
     logger.info("Connected to database", { service: "result-app" });
     getVotes(client);
   }
@@ -56,7 +51,6 @@ async.retry(
 function getVotes(client) {
   client.query('SELECT vote, COUNT(id) AS count FROM votes GROUP BY vote', [], function(err, result) {
     if (err) {
-      // FIX: Use logger
       logger.error("Error performing query", { error: err.message });
     } else {
       var votes = collectVotesFromResult(result);
@@ -78,7 +72,6 @@ function collectVotesFromResult(result) {
 }
 
 app.use(cookieParser());
-// FIX: Added extended option to silence deprecation warning
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/views'));
 
@@ -88,6 +81,5 @@ app.get('/', function (req, res) {
 
 server.listen(port, function () {
   var port = server.address().port;
-  // FIX: Use logger
   logger.info('App running', { port: port });
 });
