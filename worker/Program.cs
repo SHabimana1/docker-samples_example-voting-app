@@ -1,5 +1,6 @@
 using System;
 using System.Data.Common;
+using System.Diagnostics; // Required for Activity
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -26,37 +27,52 @@ namespace Worker
                     .WriteTo.Console(new JsonFormatter())
                     .CreateLogger();
 
-                // Keep alive is not implemented in Npgsql yet. This workaround was recommended:
-                // https://github.com/npgsql/npgsql/issues/1214#issuecomment-235828359
                 var keepAliveCommand = pgsql.CreateCommand();
                 keepAliveCommand.CommandText = "SELECT 1";
 
-                var definition = new { vote = "", voter_id = "" };
+                // Add 'traceparent' to the definition
+                var definition = new { vote = "", voter_id = "", traceparent = "" };
+
                 while (true)
                 {
-                    // Slow down to prevent CPU spike, only query each 100ms
                     Thread.Sleep(100);
 
-                    // Reconnect redis if down
                     if (redisConn == null || !redisConn.IsConnected) {
                         Console.WriteLine("Reconnecting Redis");
                         redisConn = OpenRedisConnection("redis");
                         redis = redisConn.GetDatabase();
                     }
+
                     string json = redis.ListLeftPopAsync("votes").Result;
                     if (json != null)
                     {
                         var vote = JsonConvert.DeserializeAnonymousType(json, definition);
-                        Log.Information("Processing vote for {VoteChoice} by {VoterId}", vote.vote, vote.voter_id);
-                        // Reconnect DB if down
-                        if (!pgsql.State.Equals(System.Data.ConnectionState.Open))
+
+                        // Start Distributed Trace Activity
+                        // We use the W3C 'traceparent' passed from Python
+                        using (var activity = new Activity("ProcessingVote"))
                         {
-                            Console.WriteLine("Reconnecting DB");
-                            pgsql = OpenDbConnection("Server=db;Username=postgres;Password=postgres;");
-                        }
-                        else
-                        { // Normal +1 vote requested
-                            UpdateVote(pgsql, vote.voter_id, vote.vote);
+                            if (!string.IsNullOrEmpty(vote.traceparent))
+                            {
+                                activity.SetParentId(vote.traceparent);
+                            }
+                            activity.Start();
+
+                            // Dynatrace OneAgent will now auto-enrich this log with the correct TraceID.
+                            Log.Information("Processing vote for {VoteChoice} by {VoterId}", vote.vote, vote.voter_id);
+
+                            if (!pgsql.State.Equals(System.Data.ConnectionState.Open))
+                            {
+                                Console.WriteLine("Reconnecting DB");
+                                pgsql = OpenDbConnection("Server=db;Username=postgres;Password=postgres;");
+                            }
+                            else
+                            {
+                                UpdateVote(pgsql, vote.voter_id, vote.vote);
+                            }
+                            
+                            // Stop the activity when done processing this specific vote
+                            activity.Stop();
                         }
                     }
                     else
@@ -75,7 +91,6 @@ namespace Worker
         private static NpgsqlConnection OpenDbConnection(string connectionString)
         {
             NpgsqlConnection connection;
-
             while (true)
             {
                 try
@@ -84,18 +99,12 @@ namespace Worker
                     connection.Open();
                     break;
                 }
-                catch (SocketException)
-                {
-                    Console.Error.WriteLine("Waiting for db");
-                    Thread.Sleep(1000);
-                }
-                catch (DbException)
+                catch (Exception)
                 {
                     Console.Error.WriteLine("Waiting for db");
                     Thread.Sleep(1000);
                 }
             }
-
             Console.Error.WriteLine("Connected to db");
 
             var command = connection.CreateCommand();
@@ -104,16 +113,13 @@ namespace Worker
                                         vote VARCHAR(255) NOT NULL
                                     )";
             command.ExecuteNonQuery();
-
             return connection;
         }
 
         private static ConnectionMultiplexer OpenRedisConnection(string hostname)
         {
-            // Use IP address to workaround https://github.com/StackExchange/StackExchange.Redis/issues/410
             var ipAddress = GetIp(hostname);
             Console.WriteLine($"Found redis at {ipAddress}");
-
             while (true)
             {
                 try

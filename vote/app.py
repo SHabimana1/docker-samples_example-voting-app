@@ -30,7 +30,6 @@ def get_redis():
 @app.route("/health")
 def health():
     try:
-        # Actually try to talk to Redis
         redis = get_redis()
         redis.ping()
         return "OK", 200
@@ -45,14 +44,26 @@ def cast_vote_api():
         if not voter_id:
             voter_id = hex(random.getrandbits(64))[2:-1]
 
-        # Get the JSON body
         content = request.json
         vote = content['vote']
 
-        app.logger.info('Vote received via API', extra={'vote': vote, 'voter_id': voter_id})
+        # Capture Trace Context
+        traceparent = request.headers.get('traceparent')
+
+        app.logger.info('Vote received via API', extra={
+            'vote': vote, 
+            'voter_id': voter_id,
+            'traceparent': traceparent 
+        })
 
         redis = get_redis()
-        data = json.dumps({'voter_id': voter_id, 'vote': vote})
+        
+        #Inject Trace Context into Redis Payload
+        data = json.dumps({
+            'voter_id': voter_id, 
+            'vote': vote,
+            'traceparent': traceparent 
+        })
         redis.rpush('votes', data)
 
         resp = jsonify(success=True, message="Vote cast")
@@ -74,8 +85,23 @@ def hello():
     if request.method == 'POST':
         redis = get_redis()
         vote = request.form['vote']
-        app.logger.info('Vote received', extra={'vote_choice': vote, 'voter_id': voter_id, 'app': 'vote-frontend'})
-        data = json.dumps({'voter_id': voter_id, 'vote': vote})
+        
+        # apture Trace Context
+        traceparent = request.headers.get('traceparent')
+
+        app.logger.info('Vote received', extra={
+            'vote_choice': vote, 
+            'voter_id': voter_id, 
+            'app': 'vote-frontend',
+            'traceparent': traceparent
+        })
+        
+        # Pass it to Redis
+        data = json.dumps({
+            'voter_id': voter_id, 
+            'vote': vote,
+            'traceparent': traceparent
+        })
         redis.rpush('votes', data)
 
     resp = make_response(render_template(
@@ -87,7 +113,6 @@ def hello():
     ))
     resp.set_cookie('voter_id', voter_id)
     return resp
-
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80, debug=True, threaded=True)
