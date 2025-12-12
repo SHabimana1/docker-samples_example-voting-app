@@ -48,7 +48,6 @@ namespace Worker
                     {
                         var vote = JsonConvert.DeserializeAnonymousType(json, definition);
 
-                        // Start Distributed Trace Activity
                         // We use the W3C 'traceparent' passed from Python
                         using (var activity = new Activity("ProcessingVote"))
                         {

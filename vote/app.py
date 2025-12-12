@@ -6,12 +6,15 @@ import socket
 import random
 import json
 import logging
+import time # Added for trace ID generation
 
 option_a = os.getenv('OPTION_A', "Cats")
 option_b = os.getenv('OPTION_B', "Dogs")
 hostname = socket.gethostname()
 
 app = Flask(__name__)
+
+# Tracer setup (We rely on Dynatrace OneAgent for tracing hooks now)
 
 logHandler = logging.StreamHandler()
 formatter = jsonlogger.JsonFormatter('%(asctime)s %(levelname)s %(message)s')
@@ -37,6 +40,21 @@ def health():
         app.logger.error("Health check failed", extra={'error': str(e)})
         return "Unhealthy", 500
 
+# If the header is stripped, we generate a new one to guarantee context propagation.
+def get_guaranteed_traceparent(incoming_header=None):
+    # Use incoming header if it exists
+    if incoming_header and incoming_header != "null":
+        return incoming_header
+
+    # Otherwise, generate a new W3C-compliant trace.
+    # Trace ID (16 bytes/32 hex chars) and Span ID (8 bytes/16 hex chars)
+    trace_id = hex(random.getrandbits(128))[2:].zfill(32)
+    span_id = hex(random.getrandbits(64))[2:].zfill(16)
+    
+    new_traceparent = f"00-{trace_id}-{span_id}-01"
+    
+    return new_traceparent
+
 @app.route("/api/vote", methods=['POST'])
 def cast_vote_api():
     try:
@@ -46,26 +64,28 @@ def cast_vote_api():
 
         content = request.json
         vote = content['vote']
+        
+        # Capture Trace Context (look for both standard headers)
+        incoming_traceparent = request.headers.get('traceparent')
+        if not incoming_traceparent:
+            incoming_traceparent = request.headers.get('x-dynatrace-header')
 
-        # Capture Trace Context
-        traceparent = request.headers.get('traceparent')
-        if not traceparent:
-            # Check for the Dynatrace proprietary header, which is often less likely to be stripped by proxies
-            traceparent = request.headers.get('x-dynatrace-header')
+        # Guarantee a traceparent exists
+        traceparent = get_guaranteed_traceparent(incoming_traceparent)
 
         app.logger.info('Vote received via API', extra={
             'vote': vote, 
             'voter_id': voter_id,
-            'traceparent_found': traceparent if traceparent else "null" 
+            'traceparent_used': traceparent 
         })
 
         redis = get_redis()
         
-        #Inject Trace Context into Redis Payload
+        # Inject Trace Context into Redis Payload
         data = json.dumps({
             'voter_id': voter_id, 
             'vote': vote,
-            'traceparent': traceparent 
+            'traceparent': traceparent
         })
         redis.rpush('votes', data)
 
@@ -89,17 +109,21 @@ def hello():
         redis = get_redis()
         vote = request.form['vote']
         
-        # apture Trace Context
-        traceparent = request.headers.get('traceparent')
+        # Capture Trace Context (look for standard headers)
+        incoming_traceparent = request.headers.get('traceparent')
+        if not incoming_traceparent:
+            incoming_traceparent = request.headers.get('x-dynatrace-header')
+            
+        # Guarantee a traceparent exists
+        traceparent = get_guaranteed_traceparent(incoming_traceparent)
 
         app.logger.info('Vote received', extra={
             'vote_choice': vote, 
             'voter_id': voter_id, 
             'app': 'vote-frontend',
-            'traceparent': traceparent
+            'traceparent_used': traceparent
         })
         
-        # Pass it to Redis
         data = json.dumps({
             'voter_id': voter_id, 
             'vote': vote,

@@ -2,3 +2,9 @@ Flask
 Redis
 gunicorn
 python-json-logger
+opentelemetry-sdk
+opentelemetry-api
+opentelemetry-instrumentation-flask
+opentelemetry-instrumentation-redis
+opentelemetry-instrumentation-logging
+opentelemetry-exporter-otlp
