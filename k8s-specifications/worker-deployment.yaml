@@ -14,14 +14,12 @@ spec:
       labels:
         app: worker
     spec:
-      # --- FIX 1: Add volumes section at the Pod spec level ---
+      # --- KEEP: Defines the volume source for the CSI driver ---
       volumes:
       - name: dynatrace-oneagent
         csi:
-          # Driver used by the Dynatrace CSI/Operator
           driver: csi.dynatrace.com 
           readOnly: true
-          # Use the namespace where your Dynakube is running (which is 'dynatrace')
           volumeAttributes:
             tenant: "dynatrace" 
       # --------------------------------------------------------
@@ -30,14 +28,8 @@ spec:
       - image: vedranregistry99.azurecr.io/worker
         name: worker
         
-        # --- FIX 2: Add volumeMounts section to the container ---
-        volumeMounts:
-        - name: dynatrace-oneagent
-          # This MUST match the path expected by LD_PRELOAD
-          mountPath: /opt/dynatrace/oneagent-paas 
-          readOnly: true
-        # -------------------------------------------------------
-
+        # --- REMOVED: The manual volumeMounts section to avoid duplication error ---
+        
         resources:
           requests:
             cpu: "100m"
