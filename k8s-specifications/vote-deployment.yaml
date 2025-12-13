@@ -5,7 +5,7 @@ metadata:
     app: vote
   name: vote
 spec:
-  replicas: 2  # High Availability - chaos testing
+  replicas: 2
   selector:
     matchLabels:
       app: vote
@@ -14,12 +14,24 @@ spec:
       labels:
         app: vote
     spec:
+      volumes:
+      - name: dynatrace-oneagent
+        csi:
+          driver: csi.dynatrace.com 
+          readOnly: true
+          volumeAttributes:
+            tenant: "dynatrace" 
+
       containers:
       - image: vedranregistry99.azurecr.io/vote
         name: vote
         ports:
         - containerPort: 80
           name: vote
+        volumeMounts:
+        - name: dynatrace-oneagent
+          mountPath: /opt/dynatrace/oneagent-paas 
+          readOnly: true
         resources:
           requests:
             cpu: "100m"

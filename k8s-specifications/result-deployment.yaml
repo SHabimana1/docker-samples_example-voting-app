@@ -19,6 +19,18 @@ spec:
       labels:
         app: result
     spec:
+      # --- FIX 1: Add volumes section at the Pod spec level ---
+      volumes:
+      - name: dynatrace-oneagent
+        csi:
+          # Driver used by the Dynatrace CSI/Operator
+          driver: csi.dynatrace.com 
+          readOnly: true
+          # Use the namespace where your Dynakube is running (which is 'dynatrace')
+          volumeAttributes:
+            tenant: "dynatrace" 
+      # --------------------------------------------------------
+
       containers:
       - image: vedranregistry99.azurecr.io/result
         name: result
@@ -28,6 +40,15 @@ spec:
         env:
         - name: POSTGRES_CONNECTION_STRING
           value: "postgres://postgres:postgres@db-0.db/postgres"
+        
+        # --- FIX 2: Add volumeMounts section to the container ---
+        volumeMounts:
+        - name: dynatrace-oneagent
+          # This MUST match the path expected by LD_PRELOAD
+          mountPath: /opt/dynatrace/oneagent-paas 
+          readOnly: true
+        # -------------------------------------------------------
+
         resources:
           requests:
             cpu: "100m"
