@@ -63,3 +63,15 @@ The voting application only accepts one vote per client browser. It does not reg
 This isn't an example of a properly architected perfectly designed distributed app... it's just a simple
 example of the various types of pieces and languages you might see (queues, persistent data, etc), and how to
 deal with them in Docker at a basic level.
+
+# For task-2 (containerization):
+This application is fully containerized using Docker. Each service: vote, result, worker has its own Dockerfile.
+
+To ensure minimal image size and follow Docker best practices:
+- Slim base images are used: node:18-slim, postgre:15-alpine
+- Multi-stage build are implemented for the .NET worker service to separate build-time & runtime dependencies
+- Package manager cacher are straight cleaned after installation to reduce image size
+- Only required runtime files are included in the final images
+
+The application can be run locally using Docker Compose with a single command:
+docker compose up --build
