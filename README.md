@@ -64,13 +64,16 @@ This isn't an example of a properly architected perfectly designed distributed a
 example of the various types of pieces and languages you might see (queues, persistent data, etc), and how to
 deal with them in Docker at a basic level.
 
+# For task-1 (CI/CD and Version Control)
+For CI/CD, i use GitHub actions because it is tightly integrated with GitHub repositories and its easy to configure. The pipeline is triggered on push and pull request events to the main branch. It will perfoms basic checks such as installing dependencies and running a simple validation that will command to ensure the application code does not contain syntax errors
+
 # For task-2 (containerization):
 This application is fully containerized using Docker. Each service: vote, result, worker has its own Dockerfile.
 
 To ensure minimal image size and follow Docker best practices:
-- Slim base images are used: node:18-slim, postgre:15-alpine
+- Slim base images are used: node:18-slim, postgres:15-alpine
 - Multi-stage build are implemented for the .NET worker service to separate build-time & runtime dependencies
-- Package manager cacher are straight cleaned after installation to reduce image size
+- Package manager cache are straight cleaned after installation to reduce image size
 - Only required runtime files are included in the final images
 
 The application can be run locally using Docker Compose with a single command:
@@ -81,3 +84,11 @@ This project uses Ansible to demonstrate IaC principles.
 A simple ansible playbook is provided to automate envrionment checks on a local machine.
 - inventory.ini = to defines the target host, which in this project i only use localhost
 - playbook.yml = contains automated tasks in Ansible version to verify Docker installation
+
+# For task-4: Monitoring & Logging
+- i choose prometheus for metrics collection because its wide ecosystem and strong docker support, while Grafana is used for visualization and dashboards. 
+
+# Improvements with More Time
+- i will add automated test cases (unit and integration test) to the CI pipeline
+- also deploy the application to a cloud environment using terraform
+- also add authentication and authorization to application
