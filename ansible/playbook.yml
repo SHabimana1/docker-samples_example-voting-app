@@ -1,0 +1,28 @@
+- name: Setup environment for Example Voting App
+  hosts: app
+  become: true
+
+  tasks:
+    - name: Ensure required packages are installed
+      apt:
+        name:
+          - docker.io
+          - docker-compose
+        state: present
+        update_cache: yes
+
+    - name: Ensure Docker service is running
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Pull application images
+      command: docker compose pull
+      args:
+        chdir: /opt/example-voting-app
+
+    - name: Run application with Docker Compose
+      command: docker compose up -d
+      args:
+        chdir: /opt/example-voting-app
