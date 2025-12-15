@@ -75,3 +75,9 @@ To ensure minimal image size and follow Docker best practices:
 
 The application can be run locally using Docker Compose with a single command:
 docker compose up --build
+
+# For task-3: Infrastructure as Code (IaC)
+This project uses Ansible to demonstrate IaC principles.
+A simple ansible playbook is provided to automate envrionment checks on a local machine.
+- inventory.ini = to defines the target host, which in this project i only use localhost
+- playbook.yml = contains automated tasks in Ansible version to verify Docker installation
