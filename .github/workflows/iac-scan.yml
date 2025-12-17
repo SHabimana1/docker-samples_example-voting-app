@@ -1,0 +1,21 @@
+name: Sysdig IaC Scan
+
+on: [push, pull_request]
+
+jobs:
+  iac-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Scan infrastructure
+        uses: sysdiglabs/scan-action@v6
+        with:
+          sysdig-secure-token: ${{ secrets.SECURE_API_TOKEN }}
+          sysdig-secure-url: ${{ secrets.SYSDIG_SECURE_URL }}
+          mode: iac
+          # Define the path to your IaC files
+          iac-scan-path: './voting-app/templates' 
+          # Optional: set a minimum severity to fail the pipeline
+          minimum-severity: 'high' 

@@ -1,0 +1,100 @@
+name: Sysdig Voting App Image Scans
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      ############################################################
+      # Authenticate Sysdig CLI Scanner
+      ############################################################
+      - name: Download Sysdig Scanner (stable)
+        run: |
+          curl -sL https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/1.24.1/linux/amd64/sysdig-cli-scanner \
+            -o sysdig-cli-scanner
+          chmod +x sysdig-cli-scanner
+
+      - name: Verify Sysdig API token exists
+        run: |
+          if [ -z "${{ secrets.SECURE_API_TOKEN }}" ]; then
+            echo "ERROR: Missing SECURE_API_TOKEN secret"
+            exit 1
+          fi
+
+      ############################################################
+      # Build Docker images for vote, worker, result
+      ############################################################
+
+      - name: Build vote image
+        run: docker build -t vote-app:latest ./vote
+
+      - name: Build worker image
+        run: docker build -t worker-app:latest ./worker
+
+      - name: Build result image
+        run: docker build -t result-app:latest ./result
+
+      ############################################################
+      # Scan Images with Sysdig CLI Scanner
+      ############################################################
+
+      - name: Scan vote image
+        id: scan_vote
+        continue-on-error: true
+        run: |
+          ./sysdig-cli-scanner \
+            --apiurl https://app.us4.sysdig.com/ \
+            docker://vote-app:latest
+        env:
+          SECURE_API_TOKEN: ${{ secrets.SECURE_API_TOKEN }}
+
+      - name: Scan worker image
+        id: scan_worker
+        continue-on-error: true
+        run: |
+          ./sysdig-cli-scanner \
+            --apiurl https://app.us4.sysdig.com/ \
+            docker://worker-app:latest
+        env:
+          SECURE_API_TOKEN: ${{ secrets.SECURE_API_TOKEN }}
+
+      - name: Scan result image
+        id: scan_result
+        continue-on-error: true
+        run: |
+          ./sysdig-cli-scanner \
+            --apiurl https://app.us4.sysdig.com/ \
+            docker://result-app:latest
+        env:
+          SECURE_API_TOKEN: ${{ secrets.SECURE_API_TOKEN }}
+
+      ############################################################
+      # Final Security Gate (Fail AFTER all scans)
+      ############################################################
+      
+      - name: Evaluate Sysdig scan results
+        run: |
+          echo "Vote scan result:   ${{ steps.scan_vote.outcome }}"
+          echo "Worker scan result: ${{ steps.scan_worker.outcome }}"
+          echo "Result scan result: ${{ steps.scan_result.outcome }}"
+
+          if [[ "${{ steps.scan_vote.outcome }}" == "failure" || \
+                "${{ steps.scan_worker.outcome }}" == "failure" || \
+                "${{ steps.scan_result.outcome }}" == "failure" ]]; then
+            echo "❌ One or more images failed Sysdig policy evaluation"
+            exit 1
+          else
+            echo "✅ All images passed Sysdig policy evaluation"
+          fi
