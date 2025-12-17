@@ -20,9 +20,10 @@ jobs:
       ############################################################
       # Authenticate Sysdig CLI Scanner
       ############################################################
-      - name: Download Sysdig CLI Scanner
+      - name: Download Sysdig Scanner (stable)
         run: |
-          curl -LO "https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/$(curl -L -s https://download.sysdig.com/scanning/sysdig-cli-scanner/latest_version.txt)/linux/amd64/sysdig-cli-scanner"
+          curl -sL https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/1.24.1/linux/amd64/sysdig-cli-scanner \
+            -o sysdig-cli-scanner
           chmod +x sysdig-cli-scanner
 
       - name: Verify Sysdig API token exists
@@ -51,7 +52,6 @@ jobs:
 
       - name: Scan vote image
         run: |
-          chmod +x ./sysdig-cli-scanner
           ./sysdig-cli-scanner \
             --apiurl https://app.us4.sysdig.com/ \
             --output vote-scan.json \
@@ -61,7 +61,6 @@ jobs:
 
       - name: Scan worker image
         run: |
-          chmod +x ./sysdig-cli-scanner
           ./sysdig-cli-scanner \
             --apiurl https://app.us4.sysdig.com/ \
             --output worker-scan.json \
@@ -71,7 +70,6 @@ jobs:
 
       - name: Scan result image
         run: |
-          chmod +x ./sysdig-cli-scanner
           ./sysdig-cli-scanner \
             --apiurl https://app.us4.sysdig.com/ \
             --output result-scan.json \
