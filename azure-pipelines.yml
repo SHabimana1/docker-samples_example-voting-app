@@ -1,7 +1,7 @@
 trigger:
-  branches:
+  paths:
     include:
-      - main
+      - vote/*
 
 pool:
   name: 'azure2agent'
