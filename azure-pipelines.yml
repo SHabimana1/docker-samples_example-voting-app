@@ -1,0 +1,88 @@
+trigger:
+  paths:
+    include:
+      - vote/*
+
+pool:
+  name: 'azure2agent'
+
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: 'acd1e09d-dc2d-498c-bfa8-c5943965a2e0'
+  imageRepository: 'lathadevopsexamplevotingapp'
+  containerRegistry: 'azure2registry.azurecr.io'
+  dockerfilePath: '$(Build.SourcesDirectory)/result/Dockerfile'
+  tag: '$(Build.BuildId)'
+
+
+stages:
+- stage: Build
+  displayName: Build 
+  jobs:
+  - job: Build
+    displayName: Build
+   
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(imageRepository)'
+        command: 'buildAndPush'
+        Dockerfile: 'vote/Dockerfile'
+        tags: '$(tag)'
+
+
+- stage: Push
+  displayName: Push 
+  jobs:
+  - job: Push
+    displayName: Push
+   
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(imageRepository)'
+        command: 'push'
+        tags: '$(tag)'
+
+
+
+
+- stage: Dev
+  displayName: Deploy to dev
+  jobs:
+  - deployment: DeploytoDev
+    environment: dev
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo "Pipeline triggered from GitHub commit"
+            displayName: 'Run sample script'
+          - script: echo "deploying to dev"
+- stage: QA
+  displayName: Deploy to QA
+  dependsOn: Dev
+  jobs:
+  - deployment: DeploytoQA
+    environment: qa
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo "deploying to QA"
+- stage: Prod
+  displayName: Deploy to Prod
+  dependsOn: QA
+  jobs:
+  - deployment: DeploytoProd
+    environment: prod
+    strategy: 
+      runOnce:
+        deploy:
+          steps:
+          - script: echo "deploying to Prod"
+
