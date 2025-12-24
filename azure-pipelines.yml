@@ -1,0 +1,11 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- script: echo "Pipeline triggered from GitHub commit"
+  displayName: 'Run sample script'
