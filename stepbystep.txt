@@ -1,0 +1,44 @@
+Step-by-Step Cara Melakukannya
+
+Fork Repo Asli
+Buka https://github.com/dockersamples/example-voting-app
+Klik tombol Fork di kanan atas → pilih akun GitHub kamu.
+
+Tunggu selesai, sekarang kamu punya repo baru di akun kamu, misalnya:
+https://github.com/username-kamu/example-voting-app
+
+Clone Repo Fork ke Laptop/PC KamuBashgit clone https://github.com/username-kamu/example-voting-app.git
+cd example-voting-app
+Setup Branch Utama dan Feature Branches
+Biasanya setelah clone, kamu sudah berada di branch main (atau master tergantung repo asli).
+Pastikan branch utama clean:Bashgit checkout main
+git pull origin main
+Buat branch khusus untuk pengembangan DevOps ini (biar main tetap bersih):Bashgit checkout -b devops-full-pipeline(Nama bebas, misal: devops-project, end-to-end, dll. Nanti kalau sudah selesai dan stabil, bisa merge ke main.)
+
+Buat Folder Baru di Dalam Repo
+Langsung di dalam folder example-voting-app yang sudah di-clone, buat folder-folder ini:Bashmkdir infrastructure
+mkdir ci-cd
+mkdir monitoringStruktur repo kamu nanti akan jadi kurang lebih seperti ini:textexample-voting-app/
+├── vote/                 ← kode app vote (sudah ada)
+├── result/               ← kode app result (sudah ada)
+├── worker/               ← kode worker (sudah ada)
+├── docker-compose.yml    ← sudah ada
+├── k8s-specifications/   ← YAML K8s dasar (sudah ada)
+├── infrastructure/       ← kamu buat → nanti isi file Terraform (.tf)
+├── ci-cd/                ← kamu buat → nanti isi workflow GitHub Actions (.yml)
+├── monitoring/           ← kamu buat → nanti isi Helm chart atau YAML Prometheus/Grafana
+└── README.md             ← kamu update jadi dokumentasi portfolio lengkap
+Commit dan Push Perubahan AwalBashgit add .
+git commit -m "chore: setup folder structure for DevOps pipeline (infra, ci-cd, monitoring)"
+git push origin devops-full-pipelineSekarang di GitHub kamu sudah kelihatan ada branch baru dan folder-folder baru.
+Lanjut Kerja di Branch Ini
+Semua pengembangan selanjutnya (bikin file Terraform, GitHub Actions workflow, dll) lakukan di branch devops-full-pipeline ini.
+Commit sering dengan pesan yang jelas.
+Kalau sudah selesai dan stabil, buat Pull Request dari branch ini ke main, lalu merge. Jadi branch main kamu jadi versi final yang rapi untuk ditunjukkan ke recruiter.
+
+
+Tips Tambahan
+
+README.md yang sudah ada di repo asli cukup basic. Kamu ganti atau tambahin bagian besar di atasnya jadi dokumentasi portfolio kamu (overview, architecture diagram, cara reproduce, dll).
+Semua file yang kamu buat (Terraform, YAML workflow, dll) taruh di folder-folder yang sudah dibuat tadi biar rapi dan profesional kelihatannya.
+Karena ini repo public, langsung bisa kamu taruh link-nya di CV/LinkedIn sebagai portfolio utama.
