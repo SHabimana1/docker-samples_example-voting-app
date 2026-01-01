@@ -42,3 +42,9 @@ Tips Tambahan
 README.md yang sudah ada di repo asli cukup basic. Kamu ganti atau tambahin bagian besar di atasnya jadi dokumentasi portfolio kamu (overview, architecture diagram, cara reproduce, dll).
 Semua file yang kamu buat (Terraform, YAML workflow, dll) taruh di folder-folder yang sudah dibuat tadi biar rapi dan profesional kelihatannya.
 Karena ini repo public, langsung bisa kamu taruh link-nya di CV/LinkedIn sebagai portfolio utama.
+
+token docker
+dckr_pat_Ge8ii93sZ7hNvh_SRqFHnTmosXs
+
+run
+docker login -u alfanhd
