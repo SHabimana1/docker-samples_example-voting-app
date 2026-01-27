@@ -1,0 +1,19 @@
+name: CI - Docker Compose Build Validation
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  compose-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Compose configuration
+        run: docker compose config
+
+      - name: Build all Docker Compose services
+        run: docker compose build
