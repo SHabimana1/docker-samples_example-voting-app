@@ -15,7 +15,7 @@ spec:
         app: vote
     spec:
       containers:
-      - image: shabimana1/vote:v2
+      - image: shabimana1/vote:v3
         name: vote
         ports:
         - containerPort: 80
